@@ -1,15 +1,22 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn People Scraper",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Scrapes Name, Role, and URL from the LinkedIn People tab.",
-  "permissions": ["activeTab", "scripting"],
+  "permissions": ["activeTab", "scripting", "commands"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-        "16": "icon.png",
-        "48": "icon.png",
-        "128": "icon.png"
+    "default_popup": "popup.html"
+  },
+  "commands": {
+    "run-scrape": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E"
+      },
+      "description": "Scrape LinkedIn People"
     }
   },
   "content_scripts": [
