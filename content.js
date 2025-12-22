@@ -16,29 +16,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 /**
  * Robust Copy Function
- * Tries the modern API first. If that fails (due to focus), falls back to the old method.
  */
 function copyToClipboard(text) {
-  // Method 1: Modern API
   navigator.clipboard.writeText(text).then(() => {
-    // Success
     showSuccessPopup("✅ Copied " + (text.split('\n').length - 2) + " profiles!");
   }).catch(err => {
-    // Method 2: Fallback for "Document is not focused" errors
     console.warn("Modern copy failed, trying fallback...", err);
     try {
       const textArea = document.createElement("textarea");
       textArea.value = text;
-      
-      // Ensure it's not visible but part of the DOM
       textArea.style.position = "fixed";
       textArea.style.left = "-9999px";
       textArea.style.top = "0";
       document.body.appendChild(textArea);
-      
       textArea.focus();
       textArea.select();
-      
       const successful = document.execCommand('copy');
       document.body.removeChild(textArea);
       
@@ -48,7 +40,6 @@ function copyToClipboard(text) {
         showErrorPopup("❌ Clipboard blocked. Click the page and try again.");
       }
     } catch (fallbackErr) {
-      console.error("Fallback failed", fallbackErr);
       showErrorPopup("❌ Could not copy text.");
     }
   });
@@ -59,10 +50,11 @@ function scrapePeopleTabOnly() {
   if (cards.length === 0) return null;
 
   let output = "Name\tRole\tUrl\n"; 
+  let count = 0;
 
   cards.forEach(card => {
     try {
-      // Exclusion: Skip "People you may know"
+      // 1. Exclusion: Skip "People you may know"
       const parentCard = card.closest('.artdeco-card');
       if (parentCard) {
         const header = parentCard.querySelector('h2');
@@ -71,23 +63,31 @@ function scrapePeopleTabOnly() {
         }
       }
 
-      // Name
+      // 2. Name
       const nameNode = card.querySelector('.artdeco-entity-lockup__title');
       if (!nameNode) return;
       let name = nameNode.innerText.trim().split('\n')[0];
 
-      // Role
-      const roleNode = card.querySelector('.artdeco-entity-lockup__subtitle');
-      let role = roleNode ? roleNode.innerText.trim() : "N/A";
+      // --- NEW FILTER: Skip "LinkedIn Member" ---
+      if (name.toLowerCase() === "linkedin member") return;
 
-      // URL
+      // 3. URL (Get this early to check validity)
       const anchor = card.querySelector('a');
       let cleanUrl = anchor && anchor.href ? anchor.href.split('?')[0] : "N/A";
 
+      // --- NEW FILTER: Skip if no valid URL found ---
+      if (cleanUrl === "N/A" || cleanUrl === "") return;
+
+      // 4. Role
+      const roleNode = card.querySelector('.artdeco-entity-lockup__subtitle');
+      let role = roleNode ? roleNode.innerText.trim() : "N/A";
+
       output += `${name}\t${role}\t${cleanUrl}\n`;
+      count++;
     } catch (e) { }
   });
 
+  if (count === 0) return null; // Return null if we filtered everyone out
   return output;
 }
 
