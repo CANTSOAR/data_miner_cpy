@@ -27,7 +27,7 @@ GMAIL_APP_PASSWORD = "ijotdurrxyouubsf"  # Replace with your app password!
 # Rate limiting settings
 VERIFICATION_DELAY = 3  # Seconds between each email verification
 DOMAIN_SWITCH_DELAY = 5  # Extra delay when switching domains
-MAX_VERIFICATIONS_PER_DOMAIN = 15  # Limit checks per domain to avoid Gmail limits
+MAX_VERIFICATIONS_PER_DOMAIN = 1  # Limit checks per domain to avoid Gmail limits
 
 # --- HELPER FUNCTIONS ---
 
@@ -263,7 +263,7 @@ def main():
     
     driver = setup_driver()
     
-    headers = ["Full Name", "First Name", "Last Name", "Position", "Company", "LinkedIn", "Email 1", "Email 2", "Confidence", "Reason"]
+    headers = ["Full Name", "First Name", "Last Name", "Position", "Company", "LinkedIn", "Email 1", "Email 2", "Reason"]
 
     # Create output file with headers
     with open(OUTPUT_FILE, 'w', newline='', encoding='utf-8') as f_out:
@@ -286,32 +286,32 @@ def main():
             print(f"{'='*60}")
             
             driver.get(target_url)
-            time.sleep(3)
+            time.sleep(random.uniform(1, 2))
 
             # 1. PATHFINDER - Find email format with authenticated SMTP
             print(f"\n📧 Phase 1: Email Format Detection")
-            winning_format, winning_domain, confidence = find_company_email_format(
-                driver, website, GMAIL_ADDRESS, GMAIL_APP_PASSWORD
-            )
+            #winning_format, winning_domain, confidence = find_company_email_format(
+            #    driver, website, GMAIL_ADDRESS, GMAIL_APP_PASSWORD
+            #)
             
-            print(f"\n   Result: {winning_format} @ {winning_domain}")
-            print(f"   Confidence: {confidence}")
+            #print(f"\n   Result: {winning_format} @ {winning_domain}")
+            #print(f"   Confidence: {confidence}")
             
             # Set fallback format
-            fallback_format = "format_2" if winning_format == "format_1" else "format_1"
+            #fallback_format = "format_2" if winning_format == "format_1" else "format_1"
 
             # 2. SCROLL & LOAD MORE PROFILES
             print(f"\n📜 Phase 2: Loading profiles...")
             for i in range(NUMBER_OF_SCROLLS):
                 driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                time.sleep(SCROLL_PAUSE_TIME)
+                time.sleep(random.uniform(1, 2))
                 
                 # Click "Show more" button if present
                 try:
                     btn = driver.find_element(By.CSS_SELECTOR, ".scaffold-finite-scroll__load-button")
                     if btn.is_displayed():
                         driver.execute_script("arguments[0].click();", btn)
-                        time.sleep(2)
+                        time.sleep(random.uniform(1, 2))
                 except:
                     pass
 
@@ -332,12 +332,21 @@ def main():
                     if "LinkedIn Member" in full_name:
                         continue
 
+                    if "." in full_name:
+                        continue
+
+                    if "," in full_name:
+                        continue
+
+                    if len(full_name.split()[-1]) == 1:
+                        continue
+                    
+                    if len(full_name.split()) != 2:
+                        continue
+
                     # Clean and parse name
                     clean = ''.join(e for e in full_name if e.isalnum() or e.isspace()).lower()
                     parts = clean.split()
-                    
-                    if len(parts) < 2:
-                        continue
                     
                     first_name = parts[0].capitalize()
                     last_name = parts[-1].capitalize()
@@ -361,18 +370,18 @@ def main():
                     l_clean = last_name.lower()
                     f_clean = first_name.lower()
 
-                    email_1 = construct_email(winning_format, f_clean, l_clean, f_init, winning_domain)
-                    email_2 = "" 
+                    #email_1 = construct_email(winning_format, f_clean, l_clean, f_init, winning_domain)
+                    #email_2 = "" 
                     
                     # Only add fallback if confidence isn't high
-                    if confidence != "High":
-                        email_2 = construct_email(fallback_format, f_clean, l_clean, f_init, winning_domain)
+                    #if confidence != "High":
+                    #    email_2 = construct_email(fallback_format, f_clean, l_clean, f_init, winning_domain)
 
                     reason = f"Impressed by your work as {position} at {company}."
 
                     batch_data.append([
                         full_name, first_name, last_name, position, company, 
-                        lnk_url, email_1, email_2, confidence, reason
+                        lnk_url, "", "", reason
                     ])
                     
                 except Exception as e:
@@ -380,15 +389,15 @@ def main():
 
             # Save batch to CSV
             with open(OUTPUT_FILE, 'a', newline='', encoding='utf-8') as f_app:
-                w = csv.writer(f_app)
+                w = csv.writer(f_app, delimiter=";")
                 w.writerows(batch_data)
             
             print(f"\n   ✅ Saved {len(batch_data)} leads")
-            print(f"   📊 Email Confidence: {confidence}")
-            print(f"   📧 Format: {winning_format} @ {winning_domain}")
+            #print(f"   📊 Email Confidence: {confidence}")
+            #print(f"   📧 Format: {winning_format} @ {winning_domain}")
             
             # Delay between companies to respect rate limits
-            delay = random.uniform(8, 15)
+            delay = random.uniform(1, 2)
             print(f"\n   ⏳ Cooling down for {delay:.1f} seconds before next company...")
             time.sleep(delay)
 
