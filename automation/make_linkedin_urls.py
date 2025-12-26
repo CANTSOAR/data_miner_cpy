@@ -3,7 +3,7 @@ import time
 import random
 from ddgs import DDGS
 
-INPUT_FILE = "./data/companies.csv"
+INPUT_FILE = "./data/temp.csv"
 OUTPUT_FILE = "./data/linkedin_urls.csv"
 
 def get_linkedin_people_url(company_name):
@@ -26,7 +26,7 @@ def get_linkedin_people_url(company_name):
                 base_url = base_url.rstrip("/")
                 
                 # Success!
-                return base_url + "/people/"
+                return base_url + "/people/?keywords=Business%20Development"
                 
     except Exception as e:
         print(f"  Error searching for {company_name}: {e}")

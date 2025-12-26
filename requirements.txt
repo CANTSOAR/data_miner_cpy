@@ -4,3 +4,4 @@ dnspython
 duckduckgo-search
 beautifulsoup4
 requests
+ddgs
