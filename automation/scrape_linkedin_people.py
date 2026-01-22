@@ -3,7 +3,6 @@ import time
 import random
 import string
 import smtplib
-import dns.resolver
 import socket
 from typing import Tuple, Optional
 from urllib.parse import urlparse
@@ -15,10 +14,10 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import NoSuchElementException
 
 # --- CONFIGURATION ---
-INPUT_FILE = "./data/linkedin_urls.csv"
+INPUT_FILE = "./data/companies.csv"  # Updated to your companies file
 OUTPUT_FILE = "./data/master_leads_list.csv"
 SCROLL_PAUSE_TIME = 1.5
-NUMBER_OF_SCROLLS = 10 
+NUMBER_OF_SCROLLS = 8 
 
 # IMPORTANT: Set up Gmail App Password at https://myaccount.google.com/apppasswords
 GMAIL_ADDRESS = "needmoneyneedcar@gmail.com"
@@ -51,11 +50,6 @@ def verify_email_smtp_authenticated(email: str, gmail_user: str, gmail_password:
     """
     Verify email using authenticated Gmail SMTP connection.
     More reliable than anonymous verification.
-    
-    Returns:
-    - True: Email exists
-    - False: Email doesn't exist
-    - None: Unable to verify
     """
     try:
         # Connect through Gmail's SMTP
@@ -267,7 +261,7 @@ def main():
 
     # Create output file with headers
     with open(OUTPUT_FILE, 'w', newline='', encoding='utf-8') as f_out:
-        writer = csv.writer(f_out)
+        writer = csv.writer(f_out, delimiter=";")
         writer.writerow(headers)
 
     with open(INPUT_FILE, 'r', encoding='utf-8') as f_in:
@@ -275,8 +269,14 @@ def main():
         
         for row in reader:
             company = row.get("Company", "")
-            target_url = row.get("LinkedIn_People_URL", "")
+            # Assuming 'LinkedIn_People_URL' is still the column name in your new CSV. 
+            # If your companies.csv has a different column name for the LinkedIn link, update this key.
+            target_url = row.get("LinkedIn_People_URL", "") 
             website = row.get("Website", "")
+            
+            # --- NEW: Get the Reason fragment from the CSV ---
+            # If "Reason" is empty, it falls back to a generic string
+            reason_fragment = row.get("Reason", "industry leadership")
             
             if not target_url or "http" not in target_url:
                 continue
@@ -377,7 +377,9 @@ def main():
                     #if confidence != "High":
                     #    email_2 = construct_email(fallback_format, f_clean, l_clean, f_init, winning_domain)
 
-                    reason = f"Impressed by your work as {position} at {company}."
+                    # --- UPDATED REASON LOGIC ---
+                    # Using the template: "I am inspired by {Company}'s excellence in {reason}."
+                    reason = f"{reason_fragment}."
 
                     batch_data.append([
                         full_name, first_name, last_name, position, company, 
