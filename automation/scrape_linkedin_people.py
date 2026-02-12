@@ -14,7 +14,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import NoSuchElementException
 
 # --- CONFIGURATION ---
-INPUT_FILE = "./data/companies.csv"  # Updated to your companies file
+INPUT_FILE = "./data/linkedin_urls.csv"  # Updated to your links file
 OUTPUT_FILE = "./data/master_leads_list.csv"
 SCROLL_PAUSE_TIME = 1.5
 NUMBER_OF_SCROLLS = 8 
@@ -285,7 +285,7 @@ def main():
             print(f"Processing: {company}")
             print(f"{'='*60}")
             
-            driver.get(target_url)
+            driver.get(target_url + "/?keywords=hr%20OR%20recruiter")
             time.sleep(random.uniform(1, 2))
 
             # 1. PATHFINDER - Find email format with authenticated SMTP
