@@ -49,7 +49,7 @@ function scrapePeopleTabOnly() {
   const cards = document.querySelectorAll('.org-people-profile-card__profile-info');
   if (cards.length === 0) return null;
 
-  let output = ""; // REMOVED TITLES: "Name\tRole\tUrl\n"; 
+  let output = ""; // REMOVED TITLES: "Name\tFirst\tLast\tRole\tCompany\tUrl\n"; 
   let count = 0;
 
   cards.forEach(card => {
@@ -62,27 +62,51 @@ function scrapePeopleTabOnly() {
           return; 
         }
       }
-
-      // 2. Name
+  
+      // 2. Name Extraction & Filtering
       const nameNode = card.querySelector('.artdeco-entity-lockup__title');
       if (!nameNode) return;
       let name = nameNode.innerText.trim().split('\n')[0];
-
-      // --- NEW FILTER: Skip "LinkedIn Member" ---
+  
+      // Skip "LinkedIn Member"
       if (name.toLowerCase() === "linkedin member") return;
-
-      // 3. URL (Get this early to check validity)
+  
+      // Skip missing last name (e.g., "Lebron J.")
+      if (name.endsWith('.')) return;
+  
+      // Ensure it's a First and Last name, then split them
+      const nameParts = name.split(/\s+/);
+      if (nameParts.length < 2) return; // Skips single-word names
+      
+      let firstName = nameParts[0];
+      let lastName = nameParts.slice(1).join(' '); // Keeps multi-word last names intact
+  
+      // 3. URL Validation
       const anchor = card.querySelector('a');
       let cleanUrl = anchor && anchor.href ? anchor.href.split('?')[0] : "N/A";
-
-      // --- NEW FILTER: Skip if no valid URL found ---
       if (cleanUrl === "N/A" || cleanUrl === "") return;
-
-      // 4. Role
+  
+      // 4. Role & Company Split
       const roleNode = card.querySelector('.artdeco-entity-lockup__subtitle');
-      let role = roleNode ? roleNode.innerText.trim() : "N/A";
-
-      output += `${name}\t${role}\t${cleanUrl}\n`;
+      let fullRoleText = roleNode ? roleNode.innerText.trim() : "N/A";
+      
+      let role = fullRoleText;
+      let company = "N/A";
+      
+      // Attempt to parse out the company if " at " or " @ " is present
+      if (fullRoleText.includes(" at ")) {
+          const splitIndex = fullRoleText.lastIndexOf(" at ");
+          role = fullRoleText.substring(0, splitIndex).trim();
+          company = fullRoleText.substring(splitIndex + 4).trim();
+      } else if (fullRoleText.includes(" @ ")) {
+          const splitIndex = fullRoleText.lastIndexOf(" @ ");
+          role = fullRoleText.substring(0, splitIndex).trim();
+          company = fullRoleText.substring(splitIndex + 3).trim();
+      }
+  
+      // 5. Output Formatting (Tab separated for spreadsheet pasting)
+      // Columns: Full Name, First, Last, Role, Company, URL
+      output += `${name}\t${firstName}\t${lastName}\t${role}\t${company}\t${cleanUrl}\n`;
       count++;
     } catch (e) { }
   });
