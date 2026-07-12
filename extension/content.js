@@ -46,10 +46,18 @@ function copyToClipboard(text) {
 }
 
 function scrapePeopleTabOnly() {
+  // --- NEW: Grab the company name from the page header ---
+  let mainCompanyName = "N/A";
+  const companyHeader = document.querySelector('h1.org-top-card-summary__title');
+  if (companyHeader) {
+    // Prefer the title attribute (cleaner), fallback to innerText
+    mainCompanyName = companyHeader.getAttribute('title') || companyHeader.innerText.trim();
+  }
+
   const cards = document.querySelectorAll('.org-people-profile-card__profile-info');
   if (cards.length === 0) return null;
 
-  let output = ""; // REMOVED TITLES: "Name\tFirst\tLast\tRole\tCompany\tUrl\n"; 
+  let output = ""; 
   let count = 0;
 
   cards.forEach(card => {
@@ -62,48 +70,35 @@ function scrapePeopleTabOnly() {
           return; 
         }
       }
-  
+
       // 2. Name Extraction & Filtering
       const nameNode = card.querySelector('.artdeco-entity-lockup__title');
       if (!nameNode) return;
       let name = nameNode.innerText.trim().split('\n')[0];
-  
+
       // Skip "LinkedIn Member"
       if (name.toLowerCase() === "linkedin member") return;
-  
+
       // Skip missing last name (e.g., "Lebron J.")
       if (name.endsWith('.')) return;
-  
+
       // Ensure it's a First and Last name, then split them
       const nameParts = name.split(/\s+/);
       if (nameParts.length < 2) return; // Skips single-word names
       
       let firstName = nameParts[0];
       let lastName = nameParts.slice(1).join(' '); // Keeps multi-word last names intact
-  
+
       // 3. URL Validation
       const anchor = card.querySelector('a');
       let cleanUrl = anchor && anchor.href ? anchor.href.split('?')[0] : "N/A";
       if (cleanUrl === "N/A" || cleanUrl === "") return;
-  
-      // 4. Role & Company Split
+
+      // 4. Role Extraction (Company is now pulled from the page header)
       const roleNode = card.querySelector('.artdeco-entity-lockup__subtitle');
-      let fullRoleText = roleNode ? roleNode.innerText.trim() : "N/A";
-      
-      let role = fullRoleText;
-      let company = "N/A";
-      
-      // Attempt to parse out the company if " at " or " @ " is present
-      if (fullRoleText.includes(" at ")) {
-          const splitIndex = fullRoleText.lastIndexOf(" at ");
-          role = fullRoleText.substring(0, splitIndex).trim();
-          company = fullRoleText.substring(splitIndex + 4).trim();
-      } else if (fullRoleText.includes(" @ ")) {
-          const splitIndex = fullRoleText.lastIndexOf(" @ ");
-          role = fullRoleText.substring(0, splitIndex).trim();
-          company = fullRoleText.substring(splitIndex + 3).trim();
-      }
-  
+      let role = roleNode ? roleNode.innerText.trim() : "N/A";
+      let company = mainCompanyName; // Applying the scraped header name
+
       // 5. Output Formatting (Tab separated for spreadsheet pasting)
       // Columns: Full Name, First, Last, Role, Company, URL
       output += `${name}\t${firstName}\t${lastName}\t${role}\t${company}\t${cleanUrl}\n`;
