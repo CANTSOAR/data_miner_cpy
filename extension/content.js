@@ -49,7 +49,7 @@ function scrapePeopleTabOnly() {
   const cards = document.querySelectorAll('.org-people-profile-card__profile-info');
   if (cards.length === 0) return null;
 
-  let output = "Name\tRole\tUrl\n"; 
+  let output = ""; // REMOVED TITLES: "Name\tRole\tUrl\n"; 
   let count = 0;
 
   cards.forEach(card => {
