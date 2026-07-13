@@ -84,7 +84,7 @@ function scrapePeopleTabOnly() {
 
       // Ensure it's a First and Last name, then split them
       const nameParts = name.split(/\s+/);
-      if (nameParts.length < 2) return; // Skips single-word names
+      if (nameParts.length != 2) return; // Only keep first last
       
       let firstName = nameParts[0];
       let lastName = nameParts.slice(1).join(' '); // Keeps multi-word last names intact
